@@ -65,7 +65,11 @@ MyAllocator::MyAllocator(size_t _basic_block_size, size_t _size) {
     seg1->CheckValid();//DB
     block_size = _basic_block_size; 
 
-    free_list = new FreeList(_size);
+    //free_list = new FreeList(_size); // this was how i initially constructed the free list
+    FreeList flist(_size);
+    free_list = &flist;
+
+
     free_list->Add(seg1);
     
 }
