@@ -51,7 +51,8 @@ friend class SegmentHeader;
    void *current_start;
    size_t remaining_memory;
    size_t block_size;
-   FreeList *free_list;
+
+   FreeList free_list;
   
   
  public:

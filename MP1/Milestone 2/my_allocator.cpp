@@ -66,11 +66,8 @@ MyAllocator::MyAllocator(size_t _basic_block_size, size_t _size) {
     block_size = _basic_block_size; 
 
     //free_list = new FreeList(_size); // this was how i initially constructed the free list
-    FreeList flist(_size);
-    free_list = &flist;
-
-
-    free_list->Add(seg1);
+    seg1->CheckValid();//DB
+    free_list.Add(seg1);
     
 }
 
@@ -98,19 +95,20 @@ void* MyAllocator::Malloc(size_t _length) {
     }
 
     //checking freelist for spot thats big enough for _length
-    SegmentHeader* seg = free_list->head;
+    SegmentHeader* seg = free_list.head;
     seg->CheckValid();//DB
     while( (seg!=NULL)&&(seg->length<len) ){
+        seg->CheckValid();//DB
         seg=seg->next;
     }
     
     if(seg==NULL) { return NULL; }
 
-    free_list->Remove(seg);
+    free_list.Remove(seg);
     if(seg->length>len){
         SegmentHeader* seg2 = seg->Split(len);
         seg2->CheckValid();//DB
-        free_list->Add(seg2);
+        free_list.Add(seg2);
     }
     void *ptr = (void*)((char*)seg+sizeof(SegmentHeader));
 
@@ -123,7 +121,7 @@ bool MyAllocator::Free(void* _a) {
     //std::free(_a);    
     SegmentHeader *seg = (SegmentHeader*)((char*)_a-sizeof(SegmentHeader));
     seg->CheckValid();//DB
-    free_list->Add(seg);
+    free_list.Add(seg);
 
     return true;
 }

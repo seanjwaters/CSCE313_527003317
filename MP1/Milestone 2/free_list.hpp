@@ -79,7 +79,7 @@ public:
 
 
 
-  FreeList(size_t _length); 
+  FreeList(); 
   /* This function initializes a new free-list. */
 
   ~FreeList(); 
@@ -92,6 +92,9 @@ public:
 
   bool Add(SegmentHeader * _segment); 
   /* Add the segment to the given free list. */
+
+  void PP();
+  /*Pretty print the whole free list*/
   
 };
 
