@@ -98,6 +98,8 @@ FreeList::~FreeList() {
   // You may need to add code here.
 }
 
+/*
+// Adding at the front
 bool FreeList::Add(SegmentHeader * _segment) {
   cout << "Add called." << endl;
   PP();
@@ -118,6 +120,26 @@ bool FreeList::Add(SegmentHeader * _segment) {
   _segment->is_free=true;
 
   PP();
+  return true;
+}
+*/
+// Adding at the back
+bool FreeList::Add(SegmentHeader * _segment) {
+  // cout << "Add called." << endl;
+  // PP();
+  
+  if(head==NULL || tail==NULL){
+    head = _segment;
+    tail = _segment;
+    return true;
+  }
+
+  _segment->prev = tail;
+  tail->next = _segment;
+  tail=_segment;
+
+  _segment->is_free=true;
+
   return true;
 }
 
