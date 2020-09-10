@@ -127,7 +127,7 @@ bool FreeList::Add(SegmentHeader * _segment) {
 bool FreeList::Add(SegmentHeader * _segment) {
   // cout << "Add called." << endl;
   // PP();
-  
+  _segment->CheckValid();
   if(head==NULL || tail==NULL){
     head = _segment;
     tail = _segment;
@@ -147,7 +147,8 @@ bool FreeList::Add(SegmentHeader * _segment) {
 bool FreeList::Remove(SegmentHeader * _segment) {
   cout << "Remove called." << endl;
   PP();
-
+  _segment->CheckValid();
+  
   // IF LIST EMPTY
   if(head==NULL || _segment==NULL){
     printf("Attempting to remove from empty list.");
