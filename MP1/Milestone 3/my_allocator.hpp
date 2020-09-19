@@ -52,7 +52,7 @@ friend class SegmentHeader;
    size_t remaining_memory;
    size_t block_size;
 
-   FreeList free_list;
+   FreeList *fl;
   
   
  public:

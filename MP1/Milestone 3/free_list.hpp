@@ -38,11 +38,9 @@ private:
   unsigned int cookie; /* To check whether this is a genuine header! */
   size_t length;
   bool is_free;
-  // Big Buddy = Left Buddy = 0 = False
-  // Small Buddy = Right Buddy = 1 = True
   bool inheritance;
   bool inheritance_of_parent;
-  bool buddy_type;
+  enum buddy_type{left,right};
 
   // You will need additional data here!
   

@@ -70,10 +70,22 @@ MyAllocator::MyAllocator(size_t _basic_block_size, size_t _size) {
     free_list.Add(seg1);
     
 
-    size_t N=1;
+    size_t N=0;
+    while( ((fib(N))*_basic_block_size)<=_size )
+    {
+        if(((fib(N+1))*_basic_block_size)>_size) { break; }
+        ++N;
+    }
+
+    // at this point N should be the right number
+
+    fl = (FreeList*)malloc((N*sizeof(FreeList)));
 
 
-    FreeList *fl = malloc(N*sizeof(FreeList));
+    for(int i=0 ; i<N-1 ; ++i){
+        fl[i]=new(i)FreeList();
+
+    }
 
 
 }
@@ -89,12 +101,11 @@ void* MyAllocator::Malloc(size_t _length) {
     //rounding up
     size_t templen =_length+sizeof(SegmentHeader);
     size_t len;
-    if((templen%block_size)==0){
-        len = templen;
-    } else {
-        len = ((templen/block_size)+1)*block_size;
-    }
 
+    int index=0;
+    while(fib(index)*block_size<templen){ ++index; }
+
+    len = 
 
     //big picture way of checking if theres enough memory before allocating
     if(len > remaining_memory){
@@ -134,8 +145,9 @@ bool MyAllocator::Free(void* _a) {
 
 // calculate fibonacci of the number
 int fib(int x){
-    if(x=-0){ return 1; }
+    if(x<0){return -1;}
+    if(x==0){ return 1; }
     else if (x==1){ return 2; }
-    else { return (fib(x-1)-f(x-2));}
+    else { return (fib(x-1)-fib(x-2));}
 }
 

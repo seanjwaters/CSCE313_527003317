@@ -98,8 +98,8 @@ FreeList::~FreeList() {
   // You may need to add code here.
 }
 
-// /*
-// Adding at the front
+
+
 bool FreeList::Coalesce(SegmentHeader * _segment) {
   // 1. FIND BUDDY'S SH
     // check if left/right segment
@@ -123,7 +123,27 @@ bool FreeList::Coalesce(SegmentHeader * _segment) {
 }
 
 
-// */
+// Adding at the front
+bool FreeList::Add(SegmentHeader * _segment) {
+  // cout << "Add called." << endl;
+  // PP();
+  if(head==NULL){
+    head=_segment;
+    tail=_segment;
+    _segment->next=NULL; //just sticking nulls where they should go just in case
+    _segment->prev=NULL;
+    return true;
+  }
+
+  _segment->prev = NULL;
+  _segment->next = head;
+  head->prev=_segment;
+  head=_segment;
+
+
+  _segment->is_free=true;
+  return true;
+}
 /*
 // Adding at the back
 bool FreeList::Add(SegmentHeader * _segment) {
