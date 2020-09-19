@@ -100,24 +100,25 @@ FreeList::~FreeList() {
 
 // /*
 // Adding at the front
-bool FreeList::Add(SegmentHeader * _segment) {
-  // cout << "Add called." << endl;
-  // PP();
-  if(head==NULL){
-    head=_segment;
-    tail=_segment;
-    _segment->next=NULL; //just sticking nulls where they should go just in case
-    _segment->prev=NULL;
-    return true;
-  }
+bool FreeList::Coalesce(SegmentHeader * _segment) {
+  // 1. FIND BUDDY'S SH
+    // check if left/right segment
 
-  _segment->prev = NULL;
-  _segment->next = head;
-  head->prev=_segment;
-  head=_segment;
+    //if you are big buddy (L segment) check to the right
 
+    //if small buddy (R segment) check to the left
 
-  _segment->is_free=true;
+  // 2. CHECK IF SIZE OF BUDDY IS CORRECT
+    // if segment is SB
+      //chec kthat BB has size F*(i+1)
+    // if seg is BB
+      // check SB IS F*(i-1)
+  
+  // 3. check if buddy is free
+
+  // 4. glue segments back together
+    //since SB segmentheader doesnt matter anymore
+
   return true;
 }
 

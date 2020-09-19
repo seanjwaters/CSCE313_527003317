@@ -69,6 +69,13 @@ MyAllocator::MyAllocator(size_t _basic_block_size, size_t _size) {
     seg1->CheckValid();//DB
     free_list.Add(seg1);
     
+
+    size_t N=1;
+
+
+    FreeList *fl = malloc(N*sizeof(FreeList));
+
+
 }
 
 MyAllocator::~MyAllocator() {
@@ -125,5 +132,10 @@ bool MyAllocator::Free(void* _a) {
     return true;
 }
 
-
+// calculate fibonacci of the number
+int fib(int x){
+    if(x=-0){ return 1; }
+    else if (x==1){ return 2; }
+    else { return (fib(x-1)-f(x-2));}
+}
 
