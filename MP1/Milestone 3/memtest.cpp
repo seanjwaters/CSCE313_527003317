@@ -26,10 +26,6 @@
 #include<string.h>
 #include<sys/time.h>
 #include<assert.h>
-#include<getopt.h>
-#include<cstdlib>
-#include<stdlib.h>
-#include<stdio.h>
 
 #include <new>
 
@@ -70,8 +66,12 @@ unsigned long num_allocations;
 
 void* operator new(std::size_t sz) throw(std::bad_alloc) {
     cout << "global op new called, size = " << sz << endl;
-    assert(ptr_global_allocator != nullptr);
-    void *ptr = ptr_global_allocator->Malloc(sz);
+    void * ptr;
+    if (ptr_global_allocator == nullptr) {
+        ptr = std::malloc(sz);
+    } else {
+        ptr = ptr_global_allocator->Malloc(sz);
+    }
     if (ptr)
         return ptr;
     else {
@@ -83,9 +83,12 @@ void* operator new(std::size_t sz) throw(std::bad_alloc) {
 void operator delete(void* ptr) throw()
 // The use of throw() is deprecated, but clang throws a hissi-fit wihouth it.
 {
-    assert(ptr_global_allocator != nullptr);
     cout << "global op delete called" << endl;
-    ptr_global_allocator->Free(ptr);
+    if (ptr_global_allocator == nullptr) {
+        std::free(ptr);
+    } else {
+        ptr_global_allocator->Free(ptr);
+    }
 };
 
 /*--------------------------------------------------------------------------*/
@@ -194,28 +197,6 @@ int main(int argc, char * argv[]) {
     
     size_t block_size = 1024; /* 1kB -- CHANGE THIS! */
     size_t mem_size = 1024 * block_size; /* 1MB -- CHANGE THIS! */
-    //cout << getopt(argc,argv, "bs") << endl;
-    int opt_int=0;
-
-    while( (opt_int = getopt(argc,argv, "b:s:")) != -1 )
-    {
-        switch(opt_int)
-            {
-                case 'b':
-                    block_size = atoi(optarg);
-                    //cout << optarg << endl;
-                    break;
-                case 's':
-                    mem_size = atoi(optarg);
-                    //cout << optarg << endl;
-                    break;
-                default:
-                    fprintf(stderr, "getopt");
-                    break;
-            }
-    }
-
-    //cout << "block size: " << block_size << "\n mem_size: " << mem_size << endl;
     
     for (;;) { // Loop forewer, or until we break.
         
@@ -267,6 +248,8 @@ int main(int argc, char * argv[]) {
         cout << "Number of allocate/free cycles: " << num_allocations << endl;
         cout << endl << endl;
         
+        // Inform new/delete that global MyAllocator is or is getting destroyed.
+        ptr_global_allocator = nullptr;
     }
     
     cout << "Reached end of Ackerman program. Thank you for using it" << endl;

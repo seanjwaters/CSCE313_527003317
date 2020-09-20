@@ -102,12 +102,20 @@ FreeList::~FreeList() {
 
 bool FreeList::Coalesce(SegmentHeader * _segment) {
   // 1. FIND BUDDY'S SH
+  // 2. CHECK IF SIZE OF BUDDY IS CORRECT
+  // 3. check if buddy is free
+  // 4. glue segments back together
     // check if left/right segment
+  if(_segment->buddy_type==SegmentHeader::buddy::LEFT){    //if you are big buddy (L segment) check if right buddy is free
+  // search for segment in the Freelist[fib_index-1] that has starting address _segment+(_segment->length)
+  int temp_index = 0;
+  while()
 
-    //if you are big buddy (L segment) check to the right
+  } else if(_segment->buddy_type==SegmentHeader::buddy::RIGHT){    //else if small buddy (R segment) check if left buddy is free
 
-    //if small buddy (R segment) check to the left
-
+  
+  }
+  
   // 2. CHECK IF SIZE OF BUDDY IS CORRECT
     // if segment is SB
       //chec kthat BB has size F*(i+1)
@@ -118,6 +126,8 @@ bool FreeList::Coalesce(SegmentHeader * _segment) {
 
   // 4. glue segments back together
     //since SB segmentheader doesnt matter anymore
+
+  
 
   return true;
 }

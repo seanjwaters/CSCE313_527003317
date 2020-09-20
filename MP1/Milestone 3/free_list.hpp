@@ -40,7 +40,13 @@ private:
   bool is_free;
   bool inheritance;
   bool inheritance_of_parent;
-  enum buddy_type{left,right};
+  int fib_index;
+  enum class buddy {LEFT,
+                    RIGHT};
+  buddy buddy_type;
+
+  SegmentHeader* next;
+  SegmentHeader* prev;
 
   // You will need additional data here!
   
@@ -71,6 +77,7 @@ public:
 
 class FreeList {
 friend class MyAllocator;
+friend class SegmentHeader;
 private:
 
   SegmentHeader* head;
@@ -85,6 +92,8 @@ public:
 
   ~FreeList(); 
   /* We probably don't need a destructor. */ 
+
+  bool Coalesce(SegmentHeader* seg);
 
   bool Remove(SegmentHeader * _segment); 
   /* Remove the given segment from the given free list. 

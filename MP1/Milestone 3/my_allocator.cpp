@@ -28,6 +28,7 @@
 #include <assert.h>
 #include <iostream>
 #include <math.h>
+#include <vector>
 
 /*--------------------------------------------------------------------------*/
 /* NAME SPACES */ 
@@ -64,11 +65,7 @@ MyAllocator::MyAllocator(size_t _basic_block_size, size_t _size) {
     SegmentHeader* seg1 = new(start)SegmentHeader(_size);
     seg1->CheckValid();//DB
     block_size = _basic_block_size; 
-
-    //free_list = new FreeList(_size); // this was how i initially constructed the free list
-    seg1->CheckValid();//DB
-    free_list.Add(seg1);
-    
+555
 
     size_t N=0;
     while( ((fib(N))*_basic_block_size)<=_size )
@@ -82,8 +79,8 @@ MyAllocator::MyAllocator(size_t _basic_block_size, size_t _size) {
     fl = (FreeList*)malloc((N*sizeof(FreeList)));
 
 
-    for(int i=0 ; i<N-1 ; ++i){
-        fl[i]=new(i)FreeList();
+    for(int i=0 ; i<N-1 ; ++i){z
+        fl[i] = new(fl) FreeList;
 
     }
 
@@ -95,42 +92,37 @@ MyAllocator::~MyAllocator() {
 }
 
 void* MyAllocator::Malloc(size_t _length) {
-    // This empty implementation just uses C standard library malloc
     cout << "MyAllocator::Malloc called with length = " << _length << endl;
     
-    //rounding up
+    // GIVEN USER-DESIRED SIZE, round up to the size you should look for in free list
     size_t templen =_length+sizeof(SegmentHeader);
     size_t len;
-
     int index=0;
-    while(fib(index)*block_size<templen){ ++index; }
+    while(fib(index)*block_size<templen){ ++index; } //looping to get highest possible index
 
-    len = 
 
-    //big picture way of checking if theres enough memory before allocating
     if(len > remaining_memory){
         cout << "ERROR - Not enough remaining memory!" << endl;
     }
 
-    //checking freelist for spot thats big enough for _length
-    SegmentHeader* seg = free_list.head;
+}
+
+bool MyAllocator::Free(void* _a) {
+    cout << "MyAllocator::Free called" << endl;
+    // 1. CHECK IF SEGMENT HAS A BUDDY
+
+    // 2. COALESCE 2 BUDDIES IF BUDDY IS FREE - FORM PARENT, else STOP
+
+    // 3. REPEAT ON PARENT SEGMENT
+
+
+
+    //std::free(_a);    
+    SegmentHeader *seg = (SegmentHeader*)((char*)_a-sizeof(SegmentHeader));
     seg->CheckValid();//DB
-    while( (seg!=NULL)&&(seg->length<len) ){
-        seg->CheckValid();//DB
-        seg=seg->next;
-    }
-    
-    if(seg==NULL) { return NULL; }
+    fl[seg->fib_index].Add(seg);
 
-    free_list.Remove(seg);
-    if(seg->length>len){
-        SegmentHeader* seg2 = seg->Split(len);
-        seg2->CheckValid();//DB
-        free_list.Add(seg2);
-    }
-    void *ptr = (void*)((char*)seg+sizeof(SegmentHeader));
-
-    return ptr;
+    return true;
 }
 
 bool MyAllocator::Free(void* _a) {
@@ -138,7 +130,7 @@ bool MyAllocator::Free(void* _a) {
     //std::free(_a);    
     SegmentHeader *seg = (SegmentHeader*)((char*)_a-sizeof(SegmentHeader));
     seg->CheckValid();//DB
-    free_list.Add(seg);
+    fl->Coalesce(seg);
 
     return true;
 }
