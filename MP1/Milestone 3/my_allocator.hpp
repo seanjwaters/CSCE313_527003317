@@ -24,6 +24,7 @@
 /*--------------------------------------------------------------------------*/
 
 #include <cstdlib>
+#include <vector>
 #include "free_list.hpp"
 
 /*--------------------------------------------------------------------------*/
@@ -53,6 +54,7 @@ friend class SegmentHeader;
    size_t block_size;
 
    FreeList *fl;
+   vector<FreeList> free_list;
   
   
  public:

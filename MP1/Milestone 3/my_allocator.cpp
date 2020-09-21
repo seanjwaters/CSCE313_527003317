@@ -65,7 +65,6 @@ MyAllocator::MyAllocator(size_t _basic_block_size, size_t _size) {
     SegmentHeader* seg1 = new(start)SegmentHeader(_size);
     seg1->CheckValid();//DB
     block_size = _basic_block_size; 
-555
 
     size_t N=0;
     while( ((fib(N))*_basic_block_size)<=_size )
@@ -75,14 +74,11 @@ MyAllocator::MyAllocator(size_t _basic_block_size, size_t _size) {
     }
 
     // at this point N should be the right number
-
-    fl = (FreeList*)malloc((N*sizeof(FreeList)));
-
-
-    for(int i=0 ; i<N-1 ; ++i){z
-        fl[i] = new(fl) FreeList;
-
+    for(int i = 0 ; i<N ; ++i){
+        free_list.push_back(FreeList());
     }
+  
+    
 
 
 }

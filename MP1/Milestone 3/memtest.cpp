@@ -26,6 +26,10 @@
 #include<string.h>
 #include<sys/time.h>
 #include<assert.h>
+#include<getopt.h>
+#include<cstdlib>
+#include<stdlib.h>
+#include<stdio.h>
 
 #include <new>
 
@@ -197,6 +201,27 @@ int main(int argc, char * argv[]) {
     
     size_t block_size = 1024; /* 1kB -- CHANGE THIS! */
     size_t mem_size = 1024 * block_size; /* 1MB -- CHANGE THIS! */
+
+    int opt_int=0;
+
+    while( (opt_int = getopt(argc,argv, "b:s:")) != -1 )
+    {
+        switch(opt_int)
+            {
+                case 'b':
+                    block_size = atoi(optarg);
+                    //cout << optarg << endl;
+                    break;
+                case 's':
+                    mem_size = atoi(optarg);
+                    //cout << optarg << endl;
+                    break;
+                default:
+                    fprintf(stderr, "getopt");
+                    break;
+            }
+    }
+
     
     for (;;) { // Loop forewer, or until we break.
         
