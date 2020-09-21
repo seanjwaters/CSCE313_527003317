@@ -116,7 +116,7 @@ bool FreeList::Coalesce(SegmentHeader * _segment) {
   
   }
   
-  // 2. CHECK IF SIZE OF BUDDY IS CORRECT
+  //,.... 2. CHECK IF SIZE OF BUDDY IS CORRECT
     // if segment is SB
       //chec kthat BB has size F*(i+1)
     // if seg is BB
