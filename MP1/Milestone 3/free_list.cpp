@@ -105,11 +105,11 @@ bool FreeList::Coalesce(SegmentHeader * _segment) {
   // 2. CHECK IF SIZE OF BUDDY IS CORRECT
   // 3. check if buddy is free
   // 4. glue segments back together
-    // check if left/right segment
+  SegmentHeader *temp_seg;
+  FreeList *temp_list;
   if(_segment->buddy_type==SegmentHeader::buddy::LEFT){    //if you are big buddy (L segment) check if right buddy is free
   // search for segment in the Freelist[fib_index-1] that has starting address _segment+(_segment->length)
-  int temp_index = 0;
-  while()
+  temp_list = MyAllocator::fl[_segment->fib_index-1];
 
   } else if(_segment->buddy_type==SegmentHeader::buddy::RIGHT){    //else if small buddy (R segment) check if left buddy is free
 
