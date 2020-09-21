@@ -245,10 +245,15 @@ int main(int argc, char * argv[]) {
         int a, b; // Parameters for the invocation of the Ackerman function.
         
         cout << "  a = "; cin >> a;
-        if (a <= 0) break;
+        if (a <= 0) {
+            ptr_global_allocator=nullptr;
+            break;
+        }
         cout << "  b = "; cin >> b;
-        if (b <= 0) break;
-        
+        if (b <= 0) {
+            ptr_global_allocator=nullptr;
+            break;
+        }
         cout << "FOO      a = " << a << ", b = " << b << endl;
         
         struct timeval tp_start; // Used to compute elapsed time.
@@ -276,6 +281,7 @@ int main(int argc, char * argv[]) {
         // Inform new/delete that global MyAllocator is or is getting destroyed.
         ptr_global_allocator = nullptr;
     }
+    ptr_global_allocator = nullptr;
     
     cout << "Reached end of Ackerman program. Thank you for using it" << endl;
     

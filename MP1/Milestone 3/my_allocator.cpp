@@ -70,8 +70,8 @@ MyAllocator::MyAllocator(size_t _basic_block_size, size_t _size) {
         ++N;
     }
 
-    // at this point N should be the right number
-    for(int i = 0 ; i<N ; ++i){
+    // at this point N should be the highest index value
+    for(int i = 0 ; i<=N ; ++i){
         fl.push_back(FreeList());
     }
 
@@ -80,7 +80,8 @@ MyAllocator::MyAllocator(size_t _basic_block_size, size_t _size) {
     fl[N].Add(root_seg);
 
     max_flist_index = N;
-
+    // printf("size about to be used: %d\n", fib(N)*block_size);
+    // cout << "Test" << endl;
 }
 
 MyAllocator::~MyAllocator() {
@@ -98,16 +99,13 @@ void* MyAllocator::Malloc(size_t _length) {
     
     len = fib(index)*block_size;
 
-    if(len > remaining_memory){
-        cout << "ERROR - Not enough remaining memory!" << endl;
-    }
-
+  
     return MallocTwo(len, index);
 }
 
 
 void* MyAllocator::MallocTwo(size_t len, int orig_index){
-    int index = orig_index;
+    int index = 0;
     while( (index<=max_flist_index)&&((fl[index].empty())||(fib(index)*block_size<len)) ) { ++index; }
 
     if(index>max_flist_index){ return nullptr; } // FAIL
