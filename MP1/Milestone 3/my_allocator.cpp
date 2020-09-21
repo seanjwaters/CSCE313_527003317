@@ -60,26 +60,26 @@ using namespace std;
 /*--------------------------------------------------------------------------*/
 
 MyAllocator::MyAllocator(size_t _basic_block_size, size_t _size) {
-    start = malloc(_size);
 
-    SegmentHeader* seg1 = new(start)SegmentHeader(_size);
-    seg1->CheckValid();//DB
     block_size = _basic_block_size; 
 
     size_t N=0;
-    while( ((fib(N))*_basic_block_size)<=_size )
+    while( ((fib(N))*block_size)<=_size )
     {
-        if(((fib(N+1))*_basic_block_size)>_size) { break; }
+        if(((fib(N+1))*block_size)>_size) { break; }
         ++N;
     }
 
     // at this point N should be the right number
     for(int i = 0 ; i<N ; ++i){
-        free_list.push_back(FreeList());
+        fl.push_back(FreeList());
     }
-  
-    
 
+    start = malloc(fib(N)*block_size);
+    SegmentHeader *root_seg = new(start)SegmentHeader(fib(N)*block_size);
+    fl[N].Add(root_seg);
+
+    max_flist_index = N;
 
 }
 
@@ -95,44 +95,104 @@ void* MyAllocator::Malloc(size_t _length) {
     size_t len;
     int index=0;
     while(fib(index)*block_size<templen){ ++index; } //looping to get highest possible index
-
+    
+    len = fib(index)*block_size;
 
     if(len > remaining_memory){
         cout << "ERROR - Not enough remaining memory!" << endl;
     }
 
+    return MallocTwo(len, index);
+}
+
+
+void* MyAllocator::MallocTwo(size_t len, int orig_index){
+    int index = orig_index;
+    while( (index<=max_flist_index)&&((fl[index].empty())||(fib(index)*block_size<len)) ) { ++index; }
+
+    if(index>max_flist_index){ return nullptr; } // FAIL
+
+    SegmentHeader *seg1 = fl[index].head;
+    SegmentHeader *seg2;    
+
+
+    fl[index].Remove(fl[index].head);
+
+    if(seg1->length==len){ //SUCCESS
+        void *ptr = (void*)((char*)seg1+sizeof(SegmentHeader));
+        return ptr;
+    } else{
+        seg2 = seg1->Split(len);
+        fl[index-1].Add(seg1);
+        fl[index-2].Add(seg2);
+        return MallocTwo(len,index);
+    }
+
+    
 }
 
 bool MyAllocator::Free(void* _a) {
-    cout << "MyAllocator::Free called" << endl;
     // 1. CHECK IF SEGMENT HAS A BUDDY
-
     // 2. COALESCE 2 BUDDIES IF BUDDY IS FREE - FORM PARENT, else STOP
-
     // 3. REPEAT ON PARENT SEGMENT
-
-
-
-    //std::free(_a);    
-    SegmentHeader *seg = (SegmentHeader*)((char*)_a-sizeof(SegmentHeader));
-    seg->CheckValid();//DB
-    fl[seg->fib_index].Add(seg);
-
-    return true;
-}
-
-bool MyAllocator::Free(void* _a) {
     cout << "MyAllocator::Free called" << endl;
-    //std::free(_a);    
     SegmentHeader *seg = (SegmentHeader*)((char*)_a-sizeof(SegmentHeader));
-    seg->CheckValid();//DB
-    fl->Coalesce(seg);
+    return Coalesce(seg);
 
-    return true;
 }
 
-// calculate fibonacci of the number
-int fib(int x){
+bool MyAllocator::Coalesce(SegmentHeader *seg){
+    int seg_idx = seg->fib_index;
+    SegmentHeader *temp_seg;
+    SegmentHeader *mseg;
+    SegmentHeader *bbseg;
+    SegmentHeader *sbseg;
+    FreeList *temp_list;
+
+    if(seg->buddy_type==SegmentHeader::buddy::LEFT){    //if you are big buddy (L segment) check if right buddy is free
+    // search for segment in the Freelist[fib_index-1] that has starting address _segment+(_segment->length)
+    size_t sb_len = fib(seg_idx-1)*block_size;
+    temp_seg = seg+seg->length;
+
+
+        if((temp_seg->fib_index==seg_idx-1)&&(temp_seg->length==sb_len)){ //IF buddy is correct size 
+            bbseg = min(seg,temp_seg);
+            sbseg = max(seg,temp_seg);
+            mseg = bbseg;
+            mseg->fib_index=bbseg->fib_index+1;
+            mseg->buddy_type=sbseg->inheritance;
+            mseg->inheritance = bbseg->inheritance;
+            Coalesce(mseg);
+        } else {
+            fl[seg_idx].Add(seg);
+            return true;
+        }
+
+    } else if(seg->buddy_type==SegmentHeader::buddy::RIGHT){    //else if small buddy (R segment) check if left buddy is free
+    size_t bb_len = fib(seg_idx+1)*block_size;
+    temp_seg = seg-bb_len;
+        if((temp_seg->fib_index==seg_idx+1)&&(temp_seg->length==bb_len)){ //IF buddy is correct size 
+            bbseg = min(seg,temp_seg);
+            sbseg = max(seg,temp_seg);
+            mseg = bbseg;
+            mseg->fib_index=bbseg->fib_index+1;
+            mseg->buddy_type=sbseg->inheritance;
+            mseg->inheritance = bbseg->inheritance;
+            Coalesce(mseg);
+        } else {
+            fl[seg_idx].Add(seg);
+            return true;
+        }
+    
+    } else if(seg->fib_index==max_flist_index){
+        fl[max_flist_index].Add(seg);
+        return true;
+    }
+
+}
+
+
+int MyAllocator::fib(int x){ // calculate fibonacci of the number
     if(x<0){return -1;}
     if(x==0){ return 1; }
     else if (x==1){ return 2; }

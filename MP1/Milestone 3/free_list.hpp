@@ -38,22 +38,22 @@ private:
   unsigned int cookie; /* To check whether this is a genuine header! */
   size_t length;
   bool is_free;
-  bool inheritance;
-  bool inheritance_of_parent;
-  int fib_index;
-  enum class buddy {LEFT,
-                    RIGHT};
-  buddy buddy_type;
-
   SegmentHeader* next;
   SegmentHeader* prev;
 
-  // You will need additional data here!
-  
+
+  int fib_index;
+  enum class buddy {LEFT,
+                    RIGHT,
+                    ORIGIN};
+  buddy buddy_type;
+  buddy inheritance;
+
+
 public:
   
 
-  SegmentHeader(size_t _length, bool _is_free = true);
+  SegmentHeader(size_t _length);
   
   ~SegmentHeader();
   /* We probably won't need the destructor. */
@@ -93,7 +93,7 @@ public:
   ~FreeList(); 
   /* We probably don't need a destructor. */ 
 
-  bool Coalesce(SegmentHeader* seg);
+  bool empty();
 
   bool Remove(SegmentHeader * _segment); 
   /* Remove the given segment from the given free list. 

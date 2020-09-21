@@ -4,7 +4,7 @@
     Author: Sean Waters
             Department of Computer Science and Engineering
             Texas A&M University
-    Date  : September 6 2020jn
+    Date  : September 6 2020
 
     Modified: 
 
@@ -55,9 +55,8 @@ using namespace std;
 /* FUNCTIONS FOR CLASS SegmentHeader */
 /*--------------------------------------------------------------------------*/
 
-SegmentHeader::SegmentHeader(size_t _length, bool _is_free) {
+SegmentHeader::SegmentHeader(size_t _length) {
   length = _length;                     //size of data segment
-  is_free = _is_free;                   //boolean for whether SH is free
   cookie = COOKIE_VALUE;
   SegmentHeader* next = NULL;
   SegmentHeader* prev = NULL;
@@ -80,7 +79,15 @@ void SegmentHeader::CheckValid() {
 
 SegmentHeader* SegmentHeader::Split(size_t _len){
     SegmentHeader* seg_new = new((void*)((char*)(this+_len)))SegmentHeader(this->length-_len);
+
+    seg_new->buddy_type = buddy::RIGHT;
+    seg_new->inheritance = this->buddy_type;
+    seg_new->fib_index = this->fib_index-2;
+
     this->length = _len;
+    this->buddy_type = buddy::LEFT;
+    this->fib_index = this->fib_index-1;
+
     return seg_new;
 } 
 
@@ -99,39 +106,12 @@ FreeList::~FreeList() {
 }
 
 
+bool FreeList::empty(){
+if(this->head==NULL){ return true; }
 
-bool FreeList::Coalesce(SegmentHeader * _segment) {
-  // 1. FIND BUDDY'S SH
-  // 2. CHECK IF SIZE OF BUDDY IS CORRECT
-  // 3. check if buddy is free
-  // 4. glue segments back together
-  SegmentHeader *temp_seg;
-  FreeList *temp_list;
-  if(_segment->buddy_type==SegmentHeader::buddy::LEFT){    //if you are big buddy (L segment) check if right buddy is free
-  // search for segment in the Freelist[fib_index-1] that has starting address _segment+(_segment->length)
-  temp_list = MyAllocator::fl[_segment->fib_index-1];
-
-  } else if(_segment->buddy_type==SegmentHeader::buddy::RIGHT){    //else if small buddy (R segment) check if left buddy is free
-
-  
-  }
-  
-  //,.... 2. CHECK IF SIZE OF BUDDY IS CORRECT
-    // if segment is SB
-      //chec kthat BB has size F*(i+1)
-    // if seg is BB
-      // check SB IS F*(i-1)
-  
-  // 3. check if buddy is free
-
-  // 4. glue segments back together
-    //since SB segmentheader doesnt matter anymore
-
-  
-
-  return true;
+return false;
 }
-
+  
 
 // Adding at the front
 bool FreeList::Add(SegmentHeader * _segment) {

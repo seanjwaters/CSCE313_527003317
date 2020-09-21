@@ -49,16 +49,15 @@ friend class SegmentHeader;
  private:
 
    void *start;
-   void *current_start;
    size_t remaining_memory;
    size_t block_size;
+   int max_flist_index;
 
-   FreeList *fl;
-   vector<FreeList> free_list;
+   std::vector<FreeList> fl;
   
   
  public:
-  MyAllocator(size_t _basic_block_size, size_t _size); 
+   MyAllocator(size_t _basic_block_size, size_t _size); 
   /* This function initializes the memory allocator and makes a portion of 
      ’_size’ bytes available. The allocator uses a ’_basic_block_size’ as 
      its minimal unit of allocation. 
@@ -69,18 +68,22 @@ friend class SegmentHeader;
      as 'unsigned int'. 
   */ 
 
-  ~MyAllocator(); 
+   ~MyAllocator(); 
   /* This function returns any allocated memory to the operating system. 
   */ 
 
-  void* Malloc(size_t _length);
+   void* Malloc(size_t _length);
   /* Allocate _length number of bytes of free memory and returns the 
      address of the allocated portion. Returns nullptr when out of memory. 
   */ 
+   void* MallocTwo(size_t len, int index);
 
-  bool Free(void* _a); 
+   bool Free(void* _a); 
   /* Frees the section of physical memory previously allocated 
-     using ’Malloc’. Returns true if everything ok. */ 
+     using ’Malloc’. Returns true if everything ok. */
+
+   bool Coalesce(SegmentHeader *seg);
+   int fib(int x);
 
    size_t RoundUp(size_t a, size_t b);
    /* passes the length of the desired block size and the -b
