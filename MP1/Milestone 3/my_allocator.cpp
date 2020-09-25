@@ -105,7 +105,7 @@ void* MyAllocator::Malloc(size_t _length) {
 
 
 void* MyAllocator::MallocTwo(size_t len, int orig_index){
-    int index = 0;
+    int index = orig_index;
     while( (index<=max_flist_index)&&((fl[index].empty())||(fib(index)*block_size<len)) ) { ++index; }
 
     if(index>max_flist_index){ return nullptr; } // FAIL
