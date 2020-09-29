@@ -55,7 +55,7 @@
 /*--------------------------------------------------------------------------*/
 
 char * RequestChannel::pipe_name(const Mode _mode) {
-  std::string pname = "fifo_" + this->my_name;
+  std::string pname = "/tmp/fifo_" + this->my_name;
 
   switch(_mode) {
   case Mode::READ: 

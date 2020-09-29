@@ -1,15 +1,13 @@
 /* 
-    File: mutex_guard.hpp
+    File: mutex_guard.cpp
 
-    Author: R. Bettati
+    Author: Sean
             Department of Computer Science
             Texas A&M University
     Date  : 07/14/16
 
 */
 
-#ifndef _mutex_guard_H_                   // include file only once
-#define _mutex_guard_H_
 
 /*--------------------------------------------------------------------------*/
 /* DEFINES */
@@ -20,7 +18,7 @@
 /*--------------------------------------------------------------------------*/
 /* INCLUDES */
 /*--------------------------------------------------------------------------*/
-
+#include "mutex_guard.hpp"
 #include "mutex.hpp"
 
 /*--------------------------------------------------------------------------*/
@@ -39,26 +37,17 @@
 /* CLASS   M u t e x G u a r d */
 /*--------------------------------------------------------------------------*/
 
-class MutexGuard {
 
-private:
-friend class Mutex;
-  /* -- INTERNAL DATA STRUCTURES
-     You may need to change them to fit your implementation. */
+MutexGuard::MutexGuard(Mutex & m){
+    _m = &m;
+    _m->Lock();
+}
 
-  Mutex * _m;
-
-public:
-
-  /* -- CONSTRUCTOR/DESTRUCTOR */
-
-  MutexGuard(Mutex & m);
-
-  ~MutexGuard();
-
-};
+MutexGuard::~MutexGuard(){
+    _m->Unlock();
+}
 
 
-#endif
+
 
 
