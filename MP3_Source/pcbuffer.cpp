@@ -40,15 +40,29 @@ using namespace std;
 /* CLASS   bounded P C B u f f e r  */
 /*--------------------------------------------------------------------------*/
 
-PCBuffer(int _size) : size(_size)
+PCBuffer::PCBuffer(int _size):size(_size),mutex(1),full(0),empty(_size){}
 
-~PCBuffer()
+PCBuffer::~PCBuffer(){}
   
 
 
-int Deposit(string _item)
+int PCBuffer::Deposit(string _item){
+    empty.P();
+    mutex.P();
+    buffer.push_back(_item);
+    mutex.V();
+    full.V();
+}
 
-string Retrieve()
+string PCBuffer::Retrieve(){
+    full.P();
+    mutex.P();
+    string s = buffer.back();
+    buffer.pop_back();
+    mutex.V();
+    empty.V();
+    return s;
+}
 
 
 

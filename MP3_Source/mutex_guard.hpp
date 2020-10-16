@@ -1,15 +1,15 @@
 /* 
-    File: pcbuffer.hpp
+    File: mutex_guard.hpp
 
     Author: R. Bettati
             Department of Computer Science
             Texas A&M University
-    Date  : 2020/09/27
+    Date  : 07/14/16
 
 */
 
-#ifndef _pcbuffer_H_                   // include file only once
-#define _pcbuffer_H_
+#ifndef _mutex_guard_H_                   // include file only once
+#define _mutex_guard_H_
 
 /*--------------------------------------------------------------------------*/
 /* DEFINES */
@@ -21,11 +21,8 @@
 /* INCLUDES */
 /*--------------------------------------------------------------------------*/
 
-#include <string>
-#include <pthread.h>
-#include "semaphore.hpp"
-#include  <vector>
-using namespace std;
+#include "mutex.hpp"
+
 /*--------------------------------------------------------------------------*/
 /* DATA STRUCTURES */ 
 /*--------------------------------------------------------------------------*/
@@ -39,35 +36,25 @@ using namespace std;
 /* -- (none) -- */
 
 /*--------------------------------------------------------------------------*/
-/* CLASS   bounded P C B u f f e r  */
+/* CLASS   M u t e x G u a r d */
 /*--------------------------------------------------------------------------*/
 
-class PCBuffer {
+class MutexGuard {
 
 private:
+friend class Mutex;
   /* -- INTERNAL DATA STRUCTURES
-     You will need to change them to fit your implementation. */
+     You may need to change them to fit your implementation. */
 
-  vector<string> buffer; // We buffer the data in an array of strings. 
-                          // You may instead prefer a vector, or a queue, or ...
-  int             size;   // Size of the bounded buffer.
-  Semaphore mutex;
-  Semaphore full, empty;
+  Mutex * _m;
 
- 
 public:
 
   /* -- CONSTRUCTOR/DESTRUCTOR */
 
-  PCBuffer(int _size);
+  MutexGuard(Mutex & m);
 
-  ~PCBuffer();
-  
-  /* -- OPERATIONS ON PC BUFFER */
-
-  int Deposit(string _item);
-
-  string Retrieve();
+  ~MutexGuard();
 
 };
 

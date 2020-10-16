@@ -22,7 +22,8 @@
 /*--------------------------------------------------------------------------*/
 
 #include <pthread.h>
-
+#include "mutex.hpp"
+#include "mutex_guard.hpp"
 /*--------------------------------------------------------------------------*/
 /* DATA STRUCTURES */ 
 /*--------------------------------------------------------------------------*/
@@ -41,10 +42,13 @@
 
 class Semaphore {
 private:
+friend class PCBuffer;
   /* -- INTERNAL DATA STRUCTURES
      You may need to change them to fit your implementation. */
 
   int             value;
+  Mutex mutex;
+  Mutex delay;
   pthread_mutex_t m;
   pthread_cond_t  c;
 

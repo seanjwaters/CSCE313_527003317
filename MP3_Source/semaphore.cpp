@@ -28,9 +28,13 @@
 /* CLASS   S e m a p h o r e  */
 /*--------------------------------------------------------------------------*/
 
-Semaphore::Semaphore(int _val){
-    value = _val;
-}
+Semaphore::Semaphore(int _val){ 
+    mutex.Unlock();
+    if(_val==0){
+        delay.Lock();
+    }else{ delay.Unlock(); }
+    value = _val; 
+    }
 
 Semaphore::~Semaphore(){
 
@@ -39,13 +43,27 @@ Semaphore::~Semaphore(){
 
 
 int Semaphore::P(){
+    delay.Lock();
+    { MutexGuard mg(mutex);
+
     --value;
-    
+    if(value>0)
+        { delay.Unlock();}
+
+    }
+
+
 }
 
 int Semaphore::V(){
-    ++value;
+    
+    { MutexGuard mg(mutex);
 
+    ++value;
+    if(value==1)
+        {delay.Unlock();}
+
+    }
 }
 
 
