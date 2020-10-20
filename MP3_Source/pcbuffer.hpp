@@ -66,7 +66,6 @@ public:
   /* -- OPERATIONS ON PC BUFFER */
 
   int Deposit(string _item);
-
   string Retrieve();
 
 };

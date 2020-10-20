@@ -60,7 +60,7 @@ Mutex m;
 #include "semaphore.hpp"
 Semaphore s(5);
 #elif PCBUFFER_TEST
-#include "pc_buffer.hpp"
+#include "pcbuffer.hpp"
 #endif
 
 /*--------------------------------------------------------------------------*/
@@ -156,10 +156,10 @@ void * produce_items(void *) {
 }
 
 void * consume_items(void *) {
-  int val;
+  string val;
   do {
-    val = buffer.Remove();
-    if (val >= 0) {
+    val = buffer.Retrieve();
+    if (val) {
       cout << "C: Removed " << val << endl;
     }
   } while (val >= 0);

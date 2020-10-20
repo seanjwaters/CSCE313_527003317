@@ -21,6 +21,8 @@
 
 #include <string>
 #include <pthread.h>
+#include <iostream>
+#include <sstream>
 #include "pcbuffer.hpp"
 
 using namespace std;
