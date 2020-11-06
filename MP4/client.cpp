@@ -1,10 +1,4 @@
-/* 
-    File: client.cpp
 
-    Author: Sean Waters
-    Date  : 2020/10/19
-
-*/
 
 /*--------------------------------------------------------------------------*/
 /* DEFINES */
@@ -31,8 +25,6 @@
 #include "reqchannel.hpp"
 #include "mutex.hpp"
 #include "mutex_guard.hpp"
-#include "mutex.cpp"
-#include "mutex_guard.cpp"
 #include "pcbuffer.hpp"
 #include "semaphore.hpp"
 
@@ -59,10 +51,9 @@ typedef struct //RTFArgs
 
 typedef struct //WTFArgs
 {
+    int nrc;
     PCBuffer *PCB;
-    std::string patient_name; 
     RequestChannel* rc;
-    int thread_id;
     map<std::string, PCBuffer*> patient_map;
     threadTrackr* trackr; 
 
@@ -126,29 +117,64 @@ void* request_thread_func(void* args){
 
     m.Unlock();//UNLOCK
 }
+std::string reply2pn(std::string reply){
+    return reply.substr(5,-1);
+    //example:
+    //d a t a   S e a n 
+    //0 1 2 3 4 5 6 7 8
+}
 
+RequestChannel rfd2rc(FDS)
 
 void* worker_thread_func(void* args){
-    
-    WTFArgs* wtfa = (WTFArgs*) args;
-    for(;;){
-        
-        std::string req = wtfa->PCB->Retrieve();  // take request from PCB
-        std::cout << "\nProcessing string '" << req << "'" << std::endl;    // print request
-        if(req=="done"){
-            std::cout << "Worker Thread " << wtfa->thread_id << " complete." << std::endl;
-            // std::cout << "STRING ABOUT TO BE REQUESTED: " << req << std::endl; //DEBUG CODE
+    /* Declaring Primitive Datatypes */
+    bool done = false;
+    int fd_counter = 0;
 
-            /* FOR GRADER - I wasn't having the WT request chanels send a "quit" request. So I added that.*/
-            std::string reply = wtfa->rc->send_request("quit");
-            delete wtfa->rc;
-            break;
+    /* Declaring Class Objects */
+    WTFArgs* wtfa = (WTFArgs*) args;
+    RequestChannel rc_array[wtfa->nrc];
+
+    /*--------------------------------------------------------------- STEP 1 -  Initialization State --------------------------------------------------------------*/
+    for(int i =0; i<wtfa->nrc ;++i){
+        /* create rc[i] */
+        std::string reply5= chan.send_request("newthread");
+        RequestChannel* new_chan=new RequestChannel(reply5,RequestChannel::Side::CLIENT);
+        rc_array[i]=new_chan;
+
+        /* string request = PCB->retrieve(); */
+        std::string req = wtfa->PCB->Retreive();
+
+        /* rc[i]->send(request); */
+        rc_array->send_request(request);
+    }
+
+    /*--------------------------------------------------------------- STEP 2 -  Steady State ----------------------------------------------------------------------*/
+    for(;;){
+        // wait for reply to come back
+        FDSET fds =  ;                          // read file descs of all req channels
+        FDSET afds = select(fds);               // active file descs = afds
+
+        for(fd in afds){
+            RequestChannel rc = rfd2rc(fd);     // map fd to rc
+            
+            // a reply is ready on ReqCh rc
+            std::string reply = rc->cread();
+            /*  Get patient name for reply.     *
+             *  This is tricky because we don't *
+             *  have the request handy.         */
+            forward(reply, patient_name);
+
+            //send next request (IF NOT DONE)
+            if(!done){
+                std::string req = wtfa->PCB->Retreive();
+                if(req=="Done."){ 
+                    done = true;
+                    break;
+                }
+                rc->cwrite(req);
+            }
         }
-        std::string PATIENT_NAME= req.substr(5,-1);
-        // std::cout << "STRING ABOUT TO BE REQUESTED: " << req << std::endl; //DEBUG CODE
-        std::string result = wtfa->rc->send_request(req);    // send request to dataserver using WTFArgs->rc
-        std::cout << "\nReply to request '" << req << "' = "<< result << std::endl; // print response
-        wtfa->patient_map[PATIENT_NAME]->Deposit(result);
     }
 
     // now the worker thread is done.
@@ -203,7 +229,6 @@ int main(int argc, char * argv[]) {
     if(fork()==0){
         execv("dataserver",NULL);
         std::cout << "CLIENT STARTED:" << std::endl;
-        // exit(0); // FOR GRADER - this line (line 206) should not have been here.
     }
     struct timeval t1, t2, n1, n2;
 
@@ -212,7 +237,7 @@ int main(int argc, char * argv[]) {
     int opt_int=0;
     int nreq; //number of request per patient
     int size; //size of bounded buffer
-    int nwt; //number of worker threads
+    int nrc; //number of request channels to be made by single worker thread
     while( (opt_int = getopt(argc,argv, "n:b:w:")) != -1 )
     {
         switch(opt_int)
@@ -226,7 +251,7 @@ int main(int argc, char * argv[]) {
                     //cout << optarg << endl;
                     break;
                 case 'w':
-                    nwt = atoi(optarg);
+                    nrc = atoi(optarg);
                     //cout << optarg << endl;
                     break;
                 default:
@@ -249,7 +274,7 @@ int main(int argc, char * argv[]) {
     
     threadTrackr* trackr = new threadTrackr;
     trackr->rt_count=3;
-    trackr->wt_count=nwt;
+    trackr->wt_count=1;
 
     map<string, PCBuffer*> patient_map;
     for(int i=0 ; i<3 ; ++i){
@@ -257,11 +282,8 @@ int main(int argc, char * argv[]) {
         patient_map[patient_names[i]]=stat_buffer;
     }
 
-    /*  FOR GRADER - (lines 263-265) Initially, I had made the # of RThreads & SThreads equal to the # of WThreads.
-        This was wrong, and I've now hard-coded the number of RT and ST to 3, which is the number of patients for this MP.
-        This also means I had to edit where I was originally using nwt (e.g. in the for loops which create the threads). */
     pthread_t *req_threads = new pthread_t[3]; 
-    pthread_t *worker_threads = new pthread_t[nwt];
+    pthread_t *worker_threads = new pthread_t[1];
     pthread_t *statistics_threads = new pthread_t[3];
     
 
@@ -277,31 +299,20 @@ int main(int argc, char * argv[]) {
         pthread_create(&req_threads[i],NULL,request_thread_func,args);
     }
 
-    /*                CREATING WORKER THREADS                      */
-    for(int i=0; i<nwt; ++i){
-        // std::cout << "CREATING WORKER NUMBER " << i << std::endl; //DEBUG
+    /*                CREATING WORKER THREAD                      */
 
-        //create a channel for every worker thread
-        //send a newthread request to the dataserver using control RC, this will respond with the new channel name new_chan
-        std::string reply5= chan.send_request("newthread");
-        std::cout << "Reply to request 'newthread' is " << reply5 << "" << std::endl;
-        RequestChannel* new_chan=new RequestChannel(reply5,RequestChannel::Side::CLIENT);
-
-        // std::cout << "WORKER CHANNEL NUMBER " << i << std::endl; //DEBUG
-
-        WTFArgs *args = new WTFArgs;
-        args->rc=new_chan;
-        args->PCB=&PCB;
-        /* FOR GRADER - (line 296) thread_id was initialized to 1. This was a mistake & should be i.*/
-        args->thread_id=i;
-        args->patient_map=patient_map;
-        args->trackr=trackr;
-        /* FOR GRADER - (line 300) The last argument in pthread_create used "&args". But args is already a pointer, so this should just be "args" */
-        args->thread_id=pthread_create(&worker_threads[i],NULL,worker_thread_func,args);
-        
-    }
+    WTFArgs *args = new WTFArgs;
+    args->rc=&chan;
+    args->PCB=&PCB;
+    args->nrc=nrc;
+    args->patient_map=patient_map;
+    args->trackr=trackr;
+    pthread_create(&worker_threads[0],NULL,worker_thread_func,args);
+    /*--------------------------------------------------------------*/
     
-    for(int i=0; i<3; ++i){ //CREATING STATISTICS THREADS
+
+    /*                CREATING STATISTICS THREADS                      */
+    for(int i=0; i<3; ++i){
         STFArgs *args = new STFArgs;
         args->n_reqs=nreq;
         args->patient_name=patient_names[i];
@@ -311,22 +322,19 @@ int main(int argc, char * argv[]) {
     gettimeofday(&t2,NULL);
     std::cout << "Average time taken by server to make " << nreq << " requests:    " << (t2.tv_usec-t1.tv_usec)/nreq << " milliseconds/request" << std::endl;
 
-    /*  FOR GRADER - lines 316-319 were useless, so I commented them out. 
-        Sen(the TA) asked me where I got them and I don't remember. Possibly from some MP2 code*/
-    // std::ofstream client_data;
-    // std::ofstream server_data;
-    // client_data.open("client_data.csv");
-    // server_data.open("server_data.csv");
+
     
-    /*  FOR GRADER - (lines 322-333) Here I implemented pthread_join for all Threads*/
+    /*  pthread_join for all Threads */
     for(int i=0;i<3;++i){
         pthread_join(req_threads[i],NULL);
     }
     std::cout << "\nRequest Threads all done and closed\n" << std::endl; //DEBUG
-    for(int i=0;i<nwt;++i){
+    
+    for(int i=0;i<1;++i){
         pthread_join(worker_threads[i],NULL);
     }
     std::cout << "\nWorker Threads all done and closed\n" << std::endl; //DEBUG
+    
     for(int i=0;i<3;++i){
         pthread_join(statistics_threads[i],NULL);
     }
