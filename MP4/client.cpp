@@ -12,16 +12,19 @@
 
 #include <cassert>
 #include <string>
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/select.h>
 #include <pthread.h>
 #include <sys/time.h>
 #include <errno.h>
 #include <unistd.h>
 #include <fstream>
 #include <map>
+
 #include "reqchannel.hpp"
 #include "mutex.hpp"
 #include "mutex_guard.hpp"
@@ -74,6 +77,27 @@ typedef struct //STFArgs
 
 Mutex m;
 
+/* pointer array of patients */
+std::string *patient_names = new std::string[3]; 
+patient_names[0] = "Joe Smith";
+patient_names[1] = "Jane Smith";
+patient_names[2] = "John Doe";
+
+/* map of patients and pcb */
+map<string, PCBuffer*> patient_map;
+for(int i=0 ; i<3 ; ++i){
+    PCBuffer *stat_buffer = new PCBuffer(size);
+    patient_map[patient_names[i]]=stat_buffer;
+}
+
+/* pointer list of rc's */
+RequestChannel* rc_array;
+
+
+/* map of fd and rcs */
+map<int, RequestChannel*> rc_map;
+
+
 /*--------------------------------------------------------------------------*/
 /* FORWARDS */
 /*--------------------------------------------------------------------------*/
@@ -117,7 +141,8 @@ void* request_thread_func(void* args){
 
     m.Unlock();//UNLOCK
 }
-std::string reply2pn(std::string reply){
+
+std::string (std::string reply){
     return reply.substr(5,-1);
     //example:
     //d a t a   S e a n 
@@ -126,14 +151,21 @@ std::string reply2pn(std::string reply){
 
 RequestChannel rfd2rc(FDS)
 
+void* forward(std::string patient_name, std::string data){
+    patient_map[patient_name]->Deposit(data);
+}
+
 void* worker_thread_func(void* args){
+    /* Declaring Class Objects */
+    WTFArgs* wtfa = (WTFArgs*) args;
+    RequestChannel *rc_array = new RequestChannel[wtfa->nrc];
+
     /* Declaring Primitive Datatypes */
     bool done = false;
     int fd_counter = 0;
-
-    /* Declaring Class Objects */
-    WTFArgs* wtfa = (WTFArgs*) args;
-    RequestChannel rc_array[wtfa->nrc];
+    int numfd = wtfa->nrc;
+    int maxfd = 0;
+    std::string patient;
 
     /*--------------------------------------------------------------- STEP 1 -  Initialization State --------------------------------------------------------------*/
     for(int i =0; i<wtfa->nrc ;++i){
@@ -141,6 +173,7 @@ void* worker_thread_func(void* args){
         std::string reply5= chan.send_request("newthread");
         RequestChannel* new_chan=new RequestChannel(reply5,RequestChannel::Side::CLIENT);
         rc_array[i]=new_chan;
+        rc_map[rc_array[i]->read_fd()] =  rc_array[i];
 
         /* string request = PCB->retrieve(); */
         std::string req = wtfa->PCB->Retreive();
@@ -152,18 +185,27 @@ void* worker_thread_func(void* args){
     /*--------------------------------------------------------------- STEP 2 -  Steady State ----------------------------------------------------------------------*/
     for(;;){
         // wait for reply to come back
-        FDSET fds =  ;                          // read file descs of all req channels
-        FDSET afds = select(fds);               // active file descs = afds
+        FD_ZERO(&fds);// read file descs of all req channels
+        for(int i=0; i<numfd ; ++i){
+            FD_SET(rc_array[i]->read_fd(),&fds);
+            maxfd = max(rc_array[i]->read_fd(),maxfd);
 
-        for(fd in afds){
-            RequestChannel rc = rfd2rc(fd);     // map fd to rc
+        }
+        FD_ZERO(&afds);// active file descs = afds
+        int afds = select(maxfd+1, fds,NULL,NULL,NULL);               
+
+        for(int i=0 ; i<maxfd ; ++i){
+            RequestChannel* rc = rfd2rc(fd);     // map fd to rc
             
             // a reply is ready on ReqCh rc
             std::string reply = rc->cread();
+            if(done){
+                rc->cread("quit");//terminate rc
+            }
             /*  Get patient name for reply.     *
              *  This is tricky because we don't *
              *  have the request handy.         */
-            forward(reply, patient_name);
+            forward(patient, reply);
 
             //send next request (IF NOT DONE)
             if(!done){
@@ -267,20 +309,13 @@ int main(int argc, char * argv[]) {
     // std::cout << "CONTROL CHANNEL DONE DONE" << std::endl; //DEBUG
     PCBuffer PCB(size);
 
-    std::string *patient_names = new std::string[3]; 
-    patient_names[0] = "Joe Smith";
-    patient_names[1] = "Jane Smith";
-    patient_names[2] = "John Doe";
-    
+
+
     threadTrackr* trackr = new threadTrackr;
     trackr->rt_count=3;
     trackr->wt_count=1;
 
-    map<string, PCBuffer*> patient_map;
-    for(int i=0 ; i<3 ; ++i){
-        PCBuffer *stat_buffer = new PCBuffer(size);
-        patient_map[patient_names[i]]=stat_buffer;
-    }
+
 
     pthread_t *req_threads = new pthread_t[3]; 
     pthread_t *worker_threads = new pthread_t[1];
@@ -330,10 +365,10 @@ int main(int argc, char * argv[]) {
     }
     std::cout << "\nRequest Threads all done and closed\n" << std::endl; //DEBUG
     
-    for(int i=0;i<1;++i){
-        pthread_join(worker_threads[i],NULL);
-    }
-    std::cout << "\nWorker Threads all done and closed\n" << std::endl; //DEBUG
+    // for(int i=0;i<1;++i){ //closing all worker threads is no longer needed since there's 1 thread
+    //     pthread_join(worker_threads[i],NULL);
+    // }
+    // std::cout << "\nWorker Threads all done and closed\n" << std::endl; //DEBUG
     
     for(int i=0;i<3;++i){
         pthread_join(statistics_threads[i],NULL);

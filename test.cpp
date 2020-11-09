@@ -4,7 +4,9 @@
 #include <sstream>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/select.h>
 #include <pthread.h>
+#include <algorithm>
 #include <sys/time.h>
 #include <errno.h>
 #include <unistd.h>
@@ -13,15 +15,17 @@
 using namespace std;
 
 int main(){
-    int int_array;
-    int *int_parray = {1,2,3,4,5};
-    // for(int i=0;i<5;++i){
-    //     int_array[i]=(i*2);
-    // }
-    for(int i=0;i<5;++i){
-        cout << *int_parray[i];
+    fd_set test;
+    FD_ZERO(&test);
+    int arr[10]={1,2,3,4,5,6,7,8,9,10};
+
+    int maxfd = 0;
+    // FD_SET(0,&test);
+    // FD_SET(1,&test);
+    for(int i=0; i<10 ; ++i){
+        FD_SET(arr[i], &test);
+        // maxfd = max(maxfd, test[i]);
     }
-    
 
 
 }
